@@ -1,5 +1,22 @@
+import os
+from pathlib import touch
+
 import yaml
 from sqlalchemy import create_engine, inspect
+
+if os.path.exists("config/config.yml") == False:
+    touch("config/config.yaml")
+    print("Config file created")
+    config_dict = {
+        "connection_string": "mysql+pymysql://username:password@ip:3306/db?charset=utf8mb4",
+        "wan_adr": "",
+        "transaction_table": "",
+        "koinly_table": "",
+    }
+    with open("config/config.yaml", "w") as ymlfile:
+        yaml.dump(config_dict, ymlfile, default_flow_style=False)
+else:
+    print("Config file already exists")
 
 
 def load_config():
