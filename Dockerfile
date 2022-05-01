@@ -8,6 +8,6 @@ RUN pip install -r requirements.txt
 
 
 # keeping container alive
-CMD ["tail", "-f", "/dev/null"]
+#CMD ["tail", "-f", "/dev/null"]
 
-#CMD [ "python","app.py" ]
+CMD [ "python","app.py" ]
