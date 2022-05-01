@@ -11,6 +11,7 @@ from helper import (
     transaction_table,
     wan_adr,
 )
+from logger import logger
 
 
 class Data_Ret:
@@ -38,7 +39,7 @@ class Data_Ret:
                 f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined"
             )[0]
             self.data.append(df)
-            print(f"Done with page : {page}")
+            logger.info(f"Done with page : {page}")
         return self.data
 
     def cleaning_data(self):
@@ -54,7 +55,7 @@ class Data_Ret:
 
     def get_block_dates(self):
         _data = self.cleaning_data()
-        print("Getting dates from blocks")
+        logger.info("Getting dates from blocks")
         _data["Date"] = _data["Block"].apply(
             lambda x: pd.read_html(f"https://www.wanscan.org/block/{x}")[0].T.iloc[
                 1:, 2
@@ -112,11 +113,11 @@ class export_to_sql:
 
 
 # Get staking data from wanchain
-print("Getting data from wanchain.....")
+logger.info("Getting data from wanchain.....")
 trans_df = Data_Ret().transactional_data()
 
 # Exporting data to SQL table as specified in the configuration file
-print("Exporting data to SQL.....")
+logger.info("Exporting data to SQL.....")
 export_to_sql().trans_sql(trans_df)
 export_to_sql().koinly_sql(koinly_format(trans_df))
-print("Sucesfully exported Wanchain data to SQL server")
+logger.info("Sucesfully exported Wanchain data to SQL server")

@@ -1,14 +1,17 @@
 import os
+import sys
 from pathlib import Path
 
 import yaml
 from sqlalchemy import create_engine, inspect
 
+from logger import logger
+
 
 def config_file():
     if os.path.exists("config/config.yaml") == False:
         Path("config/config.yaml").touch()
-        print("Config file created")
+        logger.info("Config file created")
         config_dict = {
             "connection_string": "mysql+pymysql://username:password@ip:3306/db?charset=utf8mb4",
             "wan_adr": "",
@@ -18,7 +21,7 @@ def config_file():
         with open("config/config.yaml", "w") as ymlfile:
             yaml.dump(config_dict, ymlfile, default_flow_style=False)
     else:
-        print("Config file already exists")
+        logger.info("Config file already exists")
 
 
 def load_config():
@@ -27,9 +30,9 @@ def load_config():
     with open("config/config.yaml", "r") as ymlfile:
         try:
             cfg = yaml.safe_load(ymlfile)
-            print("Yaml file correcly loaded")
+            logger.info("Yaml file correcly loaded")
         except yaml.YAMLError as exc:
-            print("Error in config file:", exc)
+            logger.error("Error in config file:", exc)
     return cfg
 
 
@@ -40,19 +43,26 @@ def applying_config(cfg):
         transaction_table = cfg["transaction_table"]
         koinly_table = cfg["koinly_table"]
         wan_adr = cfg["wan_adr"]
-        print("All settings loaded correctly")
+        logger.info("All settings loaded correctly")
     except KeyError as exc:
-        print("Error loading config", exc)
+        logger.error("Error loading config", exc)
     return connection_string, transaction_table, koinly_table, wan_adr
 
 
 def transactions_check():
-    engine = create_engine(connection_string)
-    inspector = inspect(engine)
-    if inspector.has_table(transaction_table) == True:
-        return False
-    else:
-        return True
+    try:
+        engine = create_engine(connection_string)
+        inspector = inspect(engine)
+        if inspector.has_table(transaction_table) == True:
+            return False
+        else:
+            return True
+    except Exception as exc:
+        logger.error(
+            "Error connecting to database - Please check configuration", exc_info=True
+        )
+
+        sys.exit()
 
 
 connection_string, transaction_table, koinly_table, wan_adr = applying_config(
