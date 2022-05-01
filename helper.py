@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, inspect
 
 
 def config_file():
-    if os.path.exists("config/config.yml") == False:
+    if os.path.exists("config/config.yaml") == False:
         Path("config/config.yaml").touch()
         print("Config file created")
         config_dict = {
