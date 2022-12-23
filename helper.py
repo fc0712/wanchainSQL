@@ -17,6 +17,7 @@ def config_file():
             "wan_adr": "",
             "transaction_table": "",
             "koinly_table": "",
+            "pages": "",
         }
         with open("config/config.yaml", "w") as ymlfile:
             yaml.dump(config_dict, ymlfile, default_flow_style=False)
@@ -43,10 +44,11 @@ def applying_config(cfg):
         transaction_table = cfg["transaction_table"]
         koinly_table = cfg["koinly_table"]
         wan_adr = cfg["wan_adr"]
+        pages_chosen = cfg["pages"]
         logger.info("All settings loaded correctly")
     except KeyError as exc:
         logger.error("Error loading config", exc)
-    return connection_string, transaction_table, koinly_table, wan_adr
+    return connection_string, transaction_table, koinly_table, wan_adr, pages_chosen
 
 
 def transactions_check():
@@ -65,8 +67,12 @@ def transactions_check():
         sys.exit()
 
 
-connection_string, transaction_table, koinly_table, wan_adr = applying_config(
-    cfg=load_config()
-)
+(
+    connection_string,
+    transaction_table,
+    koinly_table,
+    wan_adr,
+    pages_chosen,
+) = applying_config(cfg=load_config())
 
 ALL_TRANSACTIONS = transactions_check()

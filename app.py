@@ -8,6 +8,7 @@ from helper import (
     ALL_TRANSACTIONS,
     connection_string,
     koinly_table,
+    pages_chosen,
     transaction_table,
     wan_adr,
 )
@@ -21,7 +22,7 @@ class Data_Ret:
 
     def get_total_pages(self):
         if ALL_TRANSACTIONS == False:
-            return 1
+            return pages_chosen
         else:
             page = requests.get(
                 f"https://www.wanscan.org/rewardD?addr={self.adr}&page=1&validator=undefined"

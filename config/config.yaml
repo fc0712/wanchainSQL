@@ -2,3 +2,4 @@ wan_adr : ""
 connection_string : "mysql+pymysql://username:password@ip:3306/db?charset=utf8mb4"
 transaction_table : ""
 koinly_table : ""
+pages : 10
