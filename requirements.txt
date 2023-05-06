@@ -23,5 +23,5 @@ SQLAlchemy==1.4.35
 tomli==2.0.1
 typing_extensions==4.2.0
 urllib3==1.26.9
-psycopg2
+psycopg2-binary
 
