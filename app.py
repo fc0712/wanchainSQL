@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, inspect
 from helper import (
     ALL_TRANSACTIONS,
     connection_string,
+    headers,
     koinly_table,
     pages_chosen,
     transaction_table,
@@ -25,7 +26,7 @@ class Data_Ret:
             return pages_chosen
         else:
             page = requests.get(
-                f"https://www.wanscan.org/rewardD?addr={self.adr}&page=1&validator=undefined"
+                f"https://www.wanscan.org/rewardD?addr={self.adr}&page=1&validator=undefined",
             )
             tree = html.fromstring(page.content)
             pages = tree.xpath("/html/body/div/div[2]/div[2]/h4/span/text()")
@@ -37,7 +38,8 @@ class Data_Ret:
         for page in range(0, self.get_total_pages()):
             page += 1
             df = pd.read_html(
-                f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined"
+                f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined",
+                storage_options=headers,
             )[0]
             self.data.append(df)
             logger.info(f"Done with page : {page}")
@@ -58,9 +60,9 @@ class Data_Ret:
         _data = self.cleaning_data()
         logger.info("Getting dates from blocks")
         _data["Date"] = _data["Block"].apply(
-            lambda x: pd.read_html(f"https://www.wanscan.org/block/{x}")[0].T.iloc[
-                1:, 2
-            ]
+            lambda x: pd.read_html(
+                f"https://www.wanscan.org/block/{x}", storage_options=headers
+            )[0].T.iloc[1:, 2]
         )
         _data["Date"] = _data["Date"].apply(lambda x: x.split("(")[1].split(")")[0])
         _data["Date"] = _data.Date.apply(lambda x: x.replace("Spt", "Sep"))
@@ -90,7 +92,6 @@ class export_to_sql:
         koinly_tran=koinly_table,
         con_str=connection_string,
     ):
-
         self.engine = create_engine(con_str)
         self.wan_tran = wan_tran
         self.koinly_tran = koinly_tran

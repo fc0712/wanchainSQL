@@ -7,6 +7,8 @@ from sqlalchemy import create_engine, inspect
 
 from logger import logger
 
+headers = {"User-Agent": "Mozilla/5.0"}
+
 
 def config_file():
     if os.path.exists("config/config.yaml") == False:
