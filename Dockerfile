@@ -1,4 +1,5 @@
-FROM python:3.9.12-slim-buster
+FROM python:python:3.9-slim
+
 
 COPY .  /app
 
