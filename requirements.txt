@@ -26,7 +26,7 @@ nest-asyncio==1.5.5
 numpy==1.26.1
 packaging==21.3
 pandas==2.1.2
-pangres==4.1.1
+pangres==4.2.0
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
