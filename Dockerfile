@@ -1,6 +1,8 @@
 FROM python:3.9-slim
 
-RUN apt-get install gcc python3-dev
+RUN apt-get update && apt-get -y install gcc python3-dev
+
+
 
 COPY .  /app
 
