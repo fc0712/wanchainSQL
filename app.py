@@ -20,6 +20,9 @@ class Data_Ret:
     def __init__(self):
         self.adr = wan_adr
         self.data = []
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        }
 
     def get_total_pages(self):
         if ALL_TRANSACTIONS == False:
@@ -27,6 +30,7 @@ class Data_Ret:
         else:
             page = requests.get(
                 f"https://www.wanscan.org/rewardD?addr={self.adr}&page=1&validator=undefined",
+                headers=self.headers,
             )
             tree = html.fromstring(page.content)
             pages = tree.xpath("/html/body/div/div[2]/div[2]/h4/span/text()")
@@ -40,6 +44,7 @@ class Data_Ret:
             df = pd.read_html(
                 f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined",
                 storage_options=headers,
+                headers=self.headers,
             )[0]
             self.data.append(df)
             logger.info(f"Done with page : {page}")
@@ -61,7 +66,9 @@ class Data_Ret:
         logger.info("Getting dates from blocks")
         _data["Date"] = _data["Block"].apply(
             lambda x: pd.read_html(
-                f"https://www.wanscan.org/block/{x}", storage_options=headers
+                f"https://www.wanscan.org/block/{x}",
+                storage_options=headers,
+                headers=self.headers,
             )[0].T.iloc[1:, 2]
         )
         _data["Date"] = _data["Date"].apply(lambda x: x.split("(")[1].split(")")[0])
