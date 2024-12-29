@@ -45,13 +45,17 @@ class Data_Ret:
                 f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined",
                 headers=self.headers,
             )
-            df = pd.read_html(response.content)[0]
-            self.data.append(df)
-            logger.info(f"Done with page : {page}")
+            try:
+                df = pd.read_html(response.content)[0]
+                self.data.append(df)
+                logger.info(f"Done with page : {page}")
+            except ValueError as e:
+                logger.warning(f"No tables found on page {page}: {e}")
+                logger.debug(f"HTML content on page {page}: {response.content}")
         return self.data
 
     def cleaning_data(self):
-        raw_data = pd.concat(self.get_data())
+        raw_data = pd.concat(self.get_data(), ignore_index=True)
         raw_data = raw_data.drop(columns=["No"])
         raw_data["Currency"] = "WAN"
         raw_data["Amount"] = raw_data.Reward.str.strip("WAN")
