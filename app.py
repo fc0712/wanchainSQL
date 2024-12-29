@@ -41,11 +41,11 @@ class Data_Ret:
         page = 0
         for page in range(0, self.get_total_pages()):
             page += 1
-            df = pd.read_html(
+            response = requests.get(
                 f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined",
-                storage_options=headers,
                 headers=self.headers,
-            )[0]
+            )
+            df = pd.read_html(response.content)[0]
             self.data.append(df)
             logger.info(f"Done with page : {page}")
         return self.data
@@ -66,9 +66,10 @@ class Data_Ret:
         logger.info("Getting dates from blocks")
         _data["Date"] = _data["Block"].apply(
             lambda x: pd.read_html(
-                f"https://www.wanscan.org/block/{x}",
-                storage_options=headers,
-                headers=self.headers,
+                requests.get(
+                    f"https://www.wanscan.org/block/{x}",
+                    headers=self.headers,
+                ).content
             )[0].T.iloc[1:, 2]
         )
         _data["Date"] = _data["Date"].apply(lambda x: x.split("(")[1].split(")")[0])
