@@ -130,7 +130,7 @@ class export_to_sql:
 logger.info("Getting data from wanchain.....")
 trans_df = Data_Ret().transactional_data()
 
-# Exporting data to SQL table as specified in the configuration file
+# Exporting data to SQL table as specified in the configuration file.
 logger.info("Exporting data to SQL.....")
 export_to_sql().trans_sql(trans_df)
 export_to_sql().koinly_sql(koinly_format(trans_df))
