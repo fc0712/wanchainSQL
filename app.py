@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import pandas as pd
 import requests
 from lxml import html
@@ -37,21 +39,31 @@ class Data_Ret:
             pages = int(pages[0].split(" ")[-1])
             return pages
 
+    def _fetch_page(self, page):
+        response = requests.get(
+            f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined",
+            headers=self.headers,
+        )
+        try:
+            df = pd.read_html(response.content)[0]
+            logger.info(f"Done with page : {page}")
+            return df
+        except ValueError as e:
+            logger.warning(f"No tables found on page {page}: {e}")
+            logger.debug(f"HTML content on page {page}: {response.content}")
+            return None
+
     def get_data(self):
-        page = 0
-        for page in range(0, self.get_total_pages()):
-            page += 1
-            response = requests.get(
-                f"https://www.wanscan.org/rewardD?addr={self.adr}&page={page}&validator=undefined",
-                headers=self.headers,
-            )
-            try:
-                df = pd.read_html(response.content)[0]
-                self.data.append(df)
-                logger.info(f"Done with page : {page}")
-            except ValueError as e:
-                logger.warning(f"No tables found on page {page}: {e}")
-                logger.debug(f"HTML content on page {page}: {response.content}")
+        total_pages = self.get_total_pages()
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {
+                executor.submit(self._fetch_page, p): p
+                for p in range(1, total_pages + 1)
+            }
+            for future in as_completed(futures):
+                result = future.result()
+                if result is not None:
+                    self.data.append(result)
         return self.data
 
     def cleaning_data(self):
@@ -65,20 +77,28 @@ class Data_Ret:
 
         return raw_data
 
+    def _fetch_block_date(self, block_number):
+        response = requests.get(
+            f"https://www.wanscan.org/block/{block_number}",
+            headers=self.headers,
+        )
+        raw = pd.read_html(response.content)[0].T.iloc[1:, 2].values[0]
+        date_str = raw.split("(")[1].split(")")[0].replace("Spt", "Sep")
+        return block_number, pd.to_datetime(date_str, format="%b-%d-%Y %H:%M:%S +%Z")
+
     def get_block_dates(self):
         _data = self.cleaning_data()
         logger.info("Getting dates from blocks")
-        _data["Date"] = _data["Block"].apply(
-            lambda x: pd.read_html(
-                requests.get(
-                    f"https://www.wanscan.org/block/{x}",
-                    headers=self.headers,
-                ).content
-            )[0].T.iloc[1:, 2]
-        )
-        _data["Date"] = _data["Date"].apply(lambda x: x.split("(")[1].split(")")[0])
-        _data["Date"] = _data.Date.apply(lambda x: x.replace("Spt", "Sep"))
-        _data["Date"] = pd.to_datetime(_data["Date"], format="%b-%d-%Y %H:%M:%S +%Z")
+        block_dates = {}
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {
+                executor.submit(self._fetch_block_date, b): b
+                for b in _data["Block"].unique()
+            }
+            for future in as_completed(futures):
+                block, date = future.result()
+                block_dates[block] = date
+        _data["Date"] = _data["Block"].map(block_dates)
         return _data
 
     def transactional_data(self):
@@ -132,6 +152,7 @@ trans_df = Data_Ret().transactional_data()
 
 # Exporting data to SQL table as specified in the configuration file.
 logger.info("Exporting data to SQL.....")
-export_to_sql().trans_sql(trans_df)
-export_to_sql().koinly_sql(koinly_format(trans_df))
+exporter = export_to_sql()
+exporter.trans_sql(trans_df)
+exporter.koinly_sql(koinly_format(trans_df))
 logger.info("Sucesfully exported Wanchain data to SQL server")
