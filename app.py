@@ -89,16 +89,10 @@ class Data_Ret:
     def get_block_dates(self):
         _data = self.cleaning_data()
         logger.info("Getting dates from blocks")
-        block_dates = {}
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {
-                executor.submit(self._fetch_block_date, b): b
-                for b in _data["Block"].unique()
-            }
-            for future in as_completed(futures):
-                block, date = future.result()
-                block_dates[block] = date
-        _data["Date"] = _data["Block"].map(block_dates)
+            _data["Date"] = list(
+                executor.map(lambda b: self._fetch_block_date(b)[1], _data["Block"])
+            )
         return _data
 
     def transactional_data(self):
